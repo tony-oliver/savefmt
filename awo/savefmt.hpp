@@ -33,7 +33,7 @@ Another example:
 
 void f()
 {
-    std::cout << 200 << std::endl;
+    std::cout << std::dec << 200 << std::endl;
     std::cout << awo::savefmt{} << std::hex << 200 << std::endl;
     std::cout << 200 << std::endl;
 }
@@ -46,75 +46,113 @@ were in effect in the stream before the saver was created.
 A variety of other, more complex, scenarios can be dealt with
 using the default constructor, capture(), restore(), release(),
 the move-constructor, move-assignment operator and operator bool.
+
+Since the introduction of rvalue-references to the C++ language,
+this implementation has adopted their use, thereby circumventing
+the dodgy-looking const-casting that helped facilitate the origin
+formatted extraction/insertion (>>, <<) operators.
 */
 
 #ifndef INCLUDED_AWO_SAVEFMT_HPP
 #define INCLUDED_AWO_SAVEFMT_HPP
 
+/// @file awo/savefmt.hpp
+/// @author Tony Oliver
+
+// rvalue-references (and move semantics) require at least C++11 support.
+// The function std::exchange<>() was introduced in the C++14 standard.
+
 #if __cplusplus <= 201411L
 #error Header file "awo/savefmt.hpp" requires at least C++14 capabilities.
 #endif
 
-#include <ios>
-#include <string>
-#include <istream>
-#include <ostream>
-#include <utility>
-#include <stdexcept>
+#include <ios>          // std::basic_ios<>{}
+#include <string>       // std::char_traits<>{}
+#include <istream>      // std::basic_istream<>{}
+#include <ostream>      // std::basic_ostream<>{}
+#include <utility>      // std::exchange<>()
 
 //============================================================================
+/// This is the namespace in which all Tony Oliver's distributable components reside.
 namespace awo {
 //----------------------------------------------------------------------------
+
+/// Template from which to create classes that can save/restore stream formatting-parameters.
+///
+/// When instantiated with an appropriate character type, creates a concrete class definition
+/// which can subsequently be used to create saver/restorer objects.
+///
+/// @tparam CharT - The character type on which to instantiate this template.
+/// @tparam Traits - The character-traits type on which to instantiate this template
+/// (usually omitted and the char_traits<> default used).
+///
+/// One is generally expected to only instantiate this template over the character
+/// types \b char and \b wchar_t (for which, see the pre-instantiated typedefs
+/// \ref savefmt and \ref wsavefmt).
 
 template< typename CharT, typename Traits = std::char_traits< CharT > >
 class basic_savefmt
 {
+    /// The relevant base class of all streams of which we can save formatting parameters; <br>
+    /// also the concrete class type into an instance of which the parameters are saved.
     using stream_base = std::basic_ios< CharT, Traits >;
 
-    stream_base* bound_stream{ nullptr }; // by default, not bound to any stream
-    stream_base  saved_format{ nullptr }; // an ios object with no stream-buffer
+    /// A record of which stream's formatting parameters we are holding; initially none.
+    stream_base* bound_stream{ nullptr };
+
+    /// An ios-based object (with no stream buffer) into which the parameters are saved.
+    stream_base saved_format{ nullptr };
 
 public:
 
-    // Default/capturing constructors
+    /// Default constructor: creates an inactive saver/restorer object.
     basic_savefmt() = default;
+
+    /// Capturing constructor: saves parameters from (and a reference to) the given stream.
     explicit basic_savefmt( stream_base& stream );
 
-    // Objects of this type can be moved
+    /// Objects of this type \a can be move-constructed in the normal manner.
     basic_savefmt( basic_savefmt&& other );
-    basic_savefmt& operator=( basic_savefmt&& other );
 
-    // Objects of this type cannot be copied
+    /// Objects of this type \a cannot be copy-constructed.
     basic_savefmt( basic_savefmt const& ) = delete;
-    basic_savefmt& operator=( basic_savefmt const& ) = delete;
 
-    // Primitive operations
-    void capture( stream_base& stream );    // get & save stream's format info
-    void restore();                         // put saved format back to stream
-    void release();                         // forget stream-saved format info
-
-    // Report whether this instance is currently active
-    explicit operator bool() const;
-
-    // Determine which stream we are bound to (returns nullptr if none)
-    stream_base* stream() const;
-
-    // Destructor auto-restores if we have a stream's format captured
+    /// If we have a stream's formatting parameters captured, the destructor restores them.
     ~basic_savefmt();
 
-    // Class-associated exception type (behaves exacly like std::runtime_error)
-    class exception;
+    /// Objects of this type \a can be move-assigned in the normal manner.
+    /// @return \b *this as a \b basic_savefmt&
+    basic_savefmt& operator=( basic_savefmt&& other );
+
+    /// Objects of this type \a cannot be copy-assigned.
+    basic_savefmt& operator=( basic_savefmt const& ) = delete;
+
+    /// Save a stream's formatting parameters (possibly restoring any that are already captured).
+    void capture( stream_base& stream );
+
+    /// Restore saved parameters back to the stream from which they came.
+    void restore();
+
+    /// Reset this object such that it no longer holds a stream's parameters.
+    void release();
+
+    /// Reports the associated stream (whose formatting parameters have been saved).
+    /// \return reference to the stream as a \b stream_base* (if this object is "active");
+    /// \return a null pointer if not.
+    stream_base* stream() const;
 };
 
 /*------------------------------------------*\
 |*  Stream extraction/insertion operators:  *|
 \*------------------------------------------*/
 
+/// Stream extraction-operator to handle savefmt instances appearing in \b operator>> chains.
 template< typename CharT, typename Traits >
 std::basic_istream< CharT, Traits >&
 operator>>( std::basic_istream<CharT, Traits>& stream,
                  basic_savefmt<CharT, Traits>&& saver );
 
+/// Stream insertion-operator to handle savefmt instances appearing in \b operator<< chains.
 template< typename CharT, typename Traits >
 std::basic_ostream< CharT, Traits >&
 operator<<( std::basic_ostream<CharT, Traits>& stream,
@@ -124,7 +162,10 @@ operator<<( std::basic_ostream<CharT, Traits>& stream,
 |*  Specialisations for common stream character-types:  *|
 \*------------------------------------------------------*/
 
+/// Pre-declared instantiation and typedef of template \b basic_savefmt over the character-type \b char.
 using  savefmt = basic_savefmt< char >;
+
+/// Pre-declared instantiation and typedef of template \b basic_savefmt over the character-type \b wchar_t.
 using wsavefmt = basic_savefmt< wchar_t >;
 
 //----------------------------------------------------------------------------
@@ -209,14 +250,12 @@ void
 awo::basic_savefmt< CharT, Traits >::
 restore()
 {
-    // Inactive instances have nowhere to restore formatting parameters to.
-    if ( bound_stream == nullptr )
+    // Inactive instances ignore this request
+    if ( bound_stream != nullptr )
     {
-        throw exception( "savefmt was asked to restore() when not bound to a stream" );
+        // Restore the saved formatting parameters back to the stream.
+        bound_stream->copyfmt( saved_format );
     }
-
-    // Restore the saved formatting parameters back to the stream.
-    bound_stream->copyfmt( saved_format );
 }
 
 //----------------------------------------------------------------------------
@@ -233,21 +272,11 @@ release()
 //----------------------------------------------------------------------------
 
 template< typename CharT, typename Traits >
-awo::basic_savefmt< CharT, Traits >::
-operator bool() const
-{
-    // We are active if we are bound to any stream (and hold its parameters).
-    return bound_stream != nullptr;
-}
-
-//----------------------------------------------------------------------------
-
-template< typename CharT, typename Traits >
 auto
 awo::basic_savefmt< CharT, Traits >::
 stream() const -> stream_base*
 {
-    // Simply return a pointer to the stream to which we are bound (or nullptr).
+    // Return a pointer to the stream to which we are bound (or nullptr).
     return bound_stream;
 }
 
@@ -257,23 +286,9 @@ template< typename CharT, typename Traits >
 awo::basic_savefmt< CharT, Traits >::
 ~basic_savefmt()
 {
-    // RAII (in active instances) restores the saved parameters to the stream.
-    if ( bound_stream != nullptr )
-    {
-        bound_stream->copyfmt( saved_format ); // this is an unchecked restore()
-    }
+    // Restore any saved formatting parameters to their stream (if any).
+    restore();
 }
-
-//============================================================================
-
-template< typename CharT, typename Traits >
-class awo::basic_savefmt< CharT, Traits >::exception: public std::runtime_error
-{
-public:
-
-    // Although this is a distinct type, it behaves exactly like std:::runtime_error
-    using runtime_error::runtime_error;
-};
 
 //============================================================================
 
@@ -283,8 +298,8 @@ awo::operator>>( std::basic_istream<CharT, Traits>& stream,
                  awo::basic_savefmt<CharT, Traits>&& saver )
 {
     // Capture the stream's formatting parameters.
-    // Note: the saver will expire at the end of the enclosing expression
-    // and will therefore restore the saved parameters back to the stream.
+    // Note: the saver object will expire at the end of the enclosing expression
+    // and will therefore then restore the saved parameters back to the stream.
     saver.capture( stream );
 
     // Usual practice - return the stream referenec for further chaining.
@@ -299,8 +314,8 @@ awo::operator<<( std::basic_ostream< CharT, Traits >& stream,
                  awo::basic_savefmt< CharT, Traits >&& saver )
 {
     // Capture the stream's formatting parameters.
-    // Note: the saver will expire at the end of the enclosing expression
-    // and will therefore restore the saved parameters back to the stream.
+    // Note: the saver object will expire at the end of the enclosing expression
+    // and will therefore then restore the saved parameters back to the stream.
     saver.capture( stream );
 
     // Usual practice - return the stream reference for further chaining.

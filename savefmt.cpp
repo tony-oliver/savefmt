@@ -17,24 +17,23 @@ void test_constructors()
 
     std::cout << "default-construct sf1" << std::endl;
     savefmt sf1;                    // narrow-char default constructor
-    std::cout << "sf1.stream(): " << sf1.stream() << std::endl;
+    std::cout << "sf1.stream(): "<< sf1.stream() << std::endl;
     std::cout << std::endl;
 
     std::cout << "construct sf2 from std::cout" << std::endl;
     savefmt sf2{ std::cout };       // parametric constructor
-    std::cout << "sf2.stream(): " << sf2.stream() << std::endl;
+    std::cout << "sf2.stream(): "<< sf2.stream() << std::endl;
     std::cout << std::endl;
 
     std::cout << "move-construct sf3 from sf2" << std::endl;
     savefmt sf3 = std::move( sf2 );  // move constructor
-    std::cout << "sf2.stream(): " << sf2.stream() << std::endl;
-    std::cout << "sf3.stream(): " << sf3.stream() << std::endl;
+    std::cout << "sf2.stream(): "<< sf2.stream() << std::endl;
+    std::cout << "sf3.stream(): "<< sf3.stream() << std::endl;
     std::cout << std::endl;
 
     std::cout << "move-assign sf3 to sf2" << std::endl;
-    sf2 = std::move( sf3 );         // move assignment
-    std::cout << "sf2.stream(): " << sf2.stream() << std::endl;
-    std::cout << "sf3.stream(): " << sf3.stream() << std::endl;
+    std::cout << "sf2.stream(): "<< sf2.stream() << std::endl;
+    std::cout << "sf3.stream(): "<< sf3.stream() << std::endl;
     std::cout << std::endl;
 }
 

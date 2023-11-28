@@ -109,6 +109,10 @@ COMPILEFLAGS	+= -g3
 CFLAGS			+= $(COMPILEFLAGS)
 CXXFLAGS		+= $(COMPILEFLAGS)
 
+MAKEFILE		:= Makefile
+DOXYFILE		:= Doxyfile
+DOXYROOT		:= html/index.html
+
 # Use C++ mode when linking...
 LINK.o			:= $(LINK.o:$(CC)=$(CXX))
 
@@ -129,6 +133,9 @@ $(PROGRAM2):	$(OBJECTS2)
 endif
 
 $(ALL_OBJECTS):	Makefile
+
+$(DOXYROOT):	$(DOXYFILE) $(ALL_PROGRAMS)
+				doxygen
 
 clean:;			@rm -vf $(ALL_PROGRAMS) $(wildcard *.[do])
 
