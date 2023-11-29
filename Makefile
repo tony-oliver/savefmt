@@ -1,3 +1,8 @@
+# NOTE: this Makefile started life as an all-purpose makefile
+# (which I copy around to get projects started easily).
+# It could do with some pruning to make it specific to just
+# this project.  
+
 PROGRAM1		:= $(notdir $(CURDIR))
 #PROGRAM2		:= program2
 
@@ -30,17 +35,10 @@ LDFLAGS			+=
 LDLIBS			+=
 
 #--------------------------------------------------------------------------------------------
-# Pick up and normalise external switches
-#--------------------------------------------------------------------------------------------
-
-SHELL			!= which bash
-AFFIRMATIVES	:= 1 y ok yes true
-BF_TRACE		:= $(filter $(shell tr [:upper:] [:lower:] <<<'$(TRACE)' ), $(AFFIRMATIVES))
-
-#--------------------------------------------------------------------------------------------
 # Boilerplate code to discover the most-recent compilers and their latest supported standards
 #--------------------------------------------------------------------------------------------
 
+SHELL			!= which bash
 FIND_LATEST		:= compgen -c COMPILER | grep -E '^[^-]+(-[0-9]+)?$$' | sort -rut- -gk2 | head -1
 FIND_STANDARD	:= awk '/^LANGUAGE[0-9][0-9]$$/{printf"%02d\t%s\n",(substr($$1,length($$1)-1)+20)%100,$$1}' | sort -r | cut -f2 | head -1
 GNU_FINDSTD_CMD	:= strings COMPILER_PATH | sed -n 's/^-std=//p'                          | $(FIND_STANDARD)
@@ -109,6 +107,7 @@ COMPILEFLAGS	+= -g3
 CFLAGS			+= $(COMPILEFLAGS)
 CXXFLAGS		+= $(COMPILEFLAGS)
 
+LIBHEADER		:= awo/savefmt.hpp
 MAKEFILE		:= Makefile
 DOXYFILE		:= Doxyfile
 DOXYROOT		:= html/index.html
@@ -122,7 +121,7 @@ LINK.o			:= $(LINK.o:$(CC)=$(CXX))
 
 .PHONY:			all clean debug
 
-all:			$(ALL_PROGRAMS)
+all:			$(ALL_PROGRAMS) $(DOXYROOT)
 
 ifneq			($(PROGRAM1),)
 $(PROGRAM1):	$(OBJECTS1)
@@ -132,9 +131,9 @@ ifneq			($(PROGRAM2),)
 $(PROGRAM2):	$(OBJECTS2)
 endif
 
-$(ALL_OBJECTS):	Makefile
+$(ALL_OBJECTS):	$(MAKEFILE)
 
-$(DOXYROOT):	$(DOXYFILE) $(ALL_PROGRAMS)
+$(DOXYROOT):	$(LIBHEADER) $(DOXYFILE) $(MAKEFILE)
 				doxygen
 
 clean:;			@rm -vf $(ALL_PROGRAMS) $(wildcard *.[do])

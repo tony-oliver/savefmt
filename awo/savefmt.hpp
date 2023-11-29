@@ -1,11 +1,14 @@
+#ifndef INCLUDED_AWO_SAVEFMT_HPP
+#define INCLUDED_AWO_SAVEFMT_HPP
+
 /*
 Header file "awo/savefmt.hpp"
 
-Copyright (c) 2005-2023: Tony Oliver, H D Computer Services Ltd.
+Copyright (c) 2005-2023:, Tony Oliver (H D Computer Services Ltd.)
 
 Permission to use, copy, modify, distribute and sell this software
 and its documentation for any purpose is hereby granted without fee,
-provided that the above copyright notice appear in all copies and
+provided that the above copyright notice appears in all copies and
 that both that copyright notice and this permission notice appear
 in supporting documentation. H D Computer Services Ltd. makes no
 representations about the suitability of this software for any
@@ -13,13 +16,13 @@ purpose. It is provided "as is" without express or implied warranty.
 
 ------------------------------------------------------------------------------
 
-This class template provides the ability to save a stream's I/O format
-settings and, at a later date, restore them to those that were previously
+This class template provides a mechanism to save a stream's I/O formatting
+properties and, at a later date, restore them to those that were previously
 saved (both explicitly on request and via RAII on object destruction).
 
 A simple example:
 
-void report( int const n )
+void report_hex( unsigned const n )
 {
     awo::savefmt const saver{ std::cout };
 
@@ -53,11 +56,8 @@ the dodgy-looking const-casting that helped facilitate the origin
 formatted extraction/insertion (>>, <<) operators.
 */
 
-#ifndef INCLUDED_AWO_SAVEFMT_HPP
-#define INCLUDED_AWO_SAVEFMT_HPP
-
 /// @file awo/savefmt.hpp
-/// @author Tony Oliver
+/// @author Tony Oliver <tony@oliver.net>
 
 // rvalue-references (and move semantics) require at least C++11 support.
 // The function std::exchange<>() was introduced in the C++14 standard.
