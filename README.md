@@ -18,7 +18,7 @@ For convenience, two typedef are provided for these common specialisations:
 * **```savefmt```** = **```basic_savefmt```** specialised on **```char;```**
 * **```wsavefmt```** = **```basic_savefmt```** specialised on **```wchar_t```**.
 
-Stream-based insertion and extraction operators are also provided for the classes generated from the class template.  [See below for usage of these](#markdown-header-Expression-based-raii).
+Stream-based insertion and extraction operators are also provided for the classes generated from the class template.  [See below for usage of these](#user-content-expression-based-raii).
 
 Doxygen documentation is generated on building the test program contained in this project and [can be found here](html/index.html).
 
