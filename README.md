@@ -1,20 +1,24 @@
 # savefmt
 Easily save C++ stream formatting parameters before you change them; automatically restore them later.
 
+## Caveats
+
+This markdown file has certain faults w.r.t. local and/or external anchor points.  These are expected to be fixed in due course.
+
 ## Introduction
 
 The **```savefmt```** software component provides a class template, confined to a single header file.  All defined templates, classes and function are contained within the **```awo```** namespace (wherein can be found all components created by this author).
 
-The template (**```basic_savefmt```**) must be specialised on a character type and, optionally, a character-traits class (in the same manner as std::basic_string, std::basic_ostream, *etc*.) in order to generate concrete classes from which objects may be instantiated.
+The template (**```basic_savefmt```**) must be specialised on a character type and, optionally, a character-traits class (in the same manner as **```std::basic_string```**, **```std::basic_ios```**, *etc*.) in order to generate concrete classes from which objects may be instantiated.
 
 Typically, the only specialisations expected are on **```char```** and **```wchar_t```**, with no custom traits type - when omitted, the traits type will be **```std::char_traits<CharT>```** (where **```CharT```** is the character type on which the template is specialised).
 
-For convenience, two typedef are provided:
+For convenience, two typedef are provided for these common specialisations:
 
 * **```savefmt```** = **```basic_savefmt```** specialised on **```char;```**
 * **```wsavefmt```** = **```basic_savefmt```** specialised on **```wchar_t```**.
 
-Stream-based insertion and extraction operators are also provided for the classes generated from the class template.  See below for usage of these.
+Stream-based insertion and extraction operators are also provided for the classes generated from the class template.  [See below for usage of these](#markdown-header-Expression-based-raii).
 
 Doxygen documentation is generated on building the test program contained in this project and [can be found here](html/index.html).
 
@@ -65,11 +69,13 @@ void do_my_work()
 {
 	// ... lots of code ...
 
+	awo::savefmt saver;
+
 	// it is assumed, here, that std::cout still has its default settings (e.g. std::dec)
 
 	std::cout << "Forty-two = " << 42 << std::endl;
 
-	awo::savefmt saver( std::cout );
+	saver.capture( std::cout );
 	call_naughty_external_function();
 	saver.restore();
 
