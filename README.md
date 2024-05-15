@@ -13,7 +13,7 @@ The template (**```basic_savefmt```**) must be specialised on a character type a
 
 Typically, the only specialisations expected are on **```char```** and **```wchar_t```**, with no custom traits type - when omitted, the traits type will be **```std::char_traits<CharT>```** (where **```CharT```** is the character type on which the template is specialised).
 
-For convenience, two typedef are provided for these common specialisations:
+For convenience, two typedefs are provided for these common specialisations:
 
 * **```savefmt```** = **```basic_savefmt```** specialised on **```char;```**
 * **```wsavefmt```** = **```basic_savefmt```** specialised on **```wchar_t```**.
@@ -26,11 +26,11 @@ Doxygen documentation is generated on building the test program contained in thi
 
 The header file **```awo/savefmt.hpp```** must be included in the translation unit requiring its services.  The header should be installed in a folder named **```awo```** either (a) under the same location as the calling code's source file(s) or (b) in one of the folders that can be found on the header-include search path(s), *i.e.*
 ```
-#include "awo.savefmt"
+#include "awo/savefmt.hpp"
 ```
 or
 ```
-#include <awo.savefmt>
+#include <awo/savefmt.hpp>
 ```
 respectively.
 
