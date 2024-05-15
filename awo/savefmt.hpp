@@ -4,7 +4,7 @@
 /*
 Header file "awo/savefmt.hpp"
 
-Copyright (c) 2005-2023:, Tony Oliver (H D Computer Services Ltd.)
+Copyright (c) 2005-2024, Tony Oliver (H D Computer Services Ltd.)
 
 Permission to use, copy, modify, distribute and sell this software
 and its documentation for any purpose is hereby granted without fee,
@@ -47,8 +47,8 @@ savefmt's destructor will restore the formatting parameters that
 were in effect in the stream before the saver was created.
 
 A variety of other, more complex, scenarios can be dealt with
-using the default constructor, capture(), restore(), release(),
-the move-constructor, move-assignment operator and operator bool.
+using the default constructor, the move-constructor, move-assignment operator,
+and the name member-functions capture(), restore() and release().
 
 Since the introduction of rvalue-references to the C++ language,
 this implementation has adopted their use, thereby circumventing
