@@ -48,7 +48,7 @@ were in effect in the stream before the saver was created.
 
 A variety of other, more complex, scenarios can be dealt with
 using the default constructor, the move-constructor, move-assignment operator,
-and the name member-functions capture(), restore() and release().
+and the named member-functions capture(), restore() and release().
 
 Since the introduction of rvalue-references to the C++ language,
 this implementation has adopted their use, thereby circumventing
@@ -77,7 +77,7 @@ formatted extraction/insertion (>>, <<) operators.
 namespace awo {
 //----------------------------------------------------------------------------
 
-/// Template from which to create classes that can save/restore stream formatting-parameters.
+/// This is a template from which to create classes that can save/restore stream formatting-parameters.
 ///
 /// When instantiated with an appropriate character type, creates a concrete class definition
 /// which can subsequently be used to create saver/restorer objects.
@@ -137,7 +137,7 @@ public:
     void release();
 
     /// Reports the associated stream (whose formatting parameters have been saved).
-    /// \return reference to the stream as a \b stream_base* (if this object is "active");
+    /// \return reference to the stream as a \b stream_base* if this object is "active";
     /// \return a null pointer if not.
     stream_base* stream() const;
 };
@@ -163,7 +163,7 @@ operator<<( std::basic_ostream<CharT, Traits>& stream,
 \*------------------------------------------------------*/
 
 /// Pre-declared instantiation and typedef of template \b basic_savefmt over the character-type \b char.
-using  savefmt = basic_savefmt< char >;
+using savefmt = basic_savefmt< char >;
 
 /// Pre-declared instantiation and typedef of template \b basic_savefmt over the character-type \b wchar_t.
 using wsavefmt = basic_savefmt< wchar_t >;
@@ -302,7 +302,7 @@ awo::operator>>( std::basic_istream<CharT, Traits>& stream,
     // and will therefore then restore the saved parameters back to the stream.
     saver.capture( stream );
 
-    // Usual practice - return the stream referenec for further chaining.
+    // Usual practice - return the stream reference for further chaining.
     return stream;
 }
 
