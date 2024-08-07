@@ -1,18 +1,20 @@
 #ifndef INCLUDED_AWO_SAVEFMT_HPP
 #define INCLUDED_AWO_SAVEFMT_HPP
 
-/*
+/*****************************************************************************
+
 Header file "awo/savefmt.hpp"
 
-Copyright (c) 2005-2024, Tony Oliver (H D Computer Services Ltd.)
+Copyright © 2005-2024, Tony Oliver <tony@oliver.net>. All rights reserved.
+The author, being Tony Oliver, has asserted his moral rights.
 
 Permission to use, copy, modify, distribute and sell this software
 and its documentation for any purpose is hereby granted without fee,
 provided that the above copyright notice appears in all copies and
 that both that copyright notice and this permission notice appear
-in supporting documentation. H D Computer Services Ltd. makes no
-representations about the suitability of this software for any
-purpose. It is provided "as is" without express or implied warranty.
+in supporting documentation. The author makes no representations
+about the suitability of this software for any purpose.
+It is provided "as is" without express or implied warranty.
 
 ------------------------------------------------------------------------------
 
@@ -47,24 +49,48 @@ savefmt's destructor will restore the formatting parameters that
 were in effect in the stream before the saver was created.
 
 A variety of other, more complex, scenarios can be dealt with
-using the default constructor, the move-constructor, move-assignment operator,
-and the named member-functions capture(), restore() and release().
+using the the move-constructor, move-assignment operator and
+the named member-functions capture(), restore() and release().
 
 Since the introduction of rvalue-references to the C++ language,
-this implementation has adopted their use, thereby circumventing
-the dodgy-looking const-casting that helped facilitate the origin
-formatted extraction/insertion (>>, <<) operators.
-*/
+this implementation has adopted their use, thereby obviating the
+dreadful const-casting that was used in the original (pre-C++11)
+definitions of the stream extraction/insertion (>>, <<) operators.
+
+Since the C++14 introduction of function std::exchange() in <utility>,
+savefmt has adopted its use in the move-constructor and move-assignment
+operator.
+
+*****************************************************************************/
 
 /// @file awo/savefmt.hpp
 /// @author Tony Oliver <tony@oliver.net>
 
-// rvalue-references (and move semantics) require at least C++11 support.
-// The function std::exchange<>() was introduced in the C++14 standard.
+/*------------------------------*\
+|*  Compiler-capability checks: *|
+\*------------------------------*/
 
-#if __cplusplus <= 201411L
+#ifndef __cplusplus
+#error Header file "awo/savefmt.hpp" requires the definition of __cplusplus.
+#endif
+
+#define CPLUSPLUS_98    199711
+#define CPLUSPLUS_11    201103
+#define CPLUSPLUS_14    201402
+#define CPLUSPLUS_17    201703
+#define CPLUSPLUS_20    202002
+
+// RValue-references (and move semantics) require at least C++11 support.
+#if __cplusplus < CPLUSPLUS_11
+#error Header file "awo/savefmt.hpp" requires at least C++11 capabilities.
+#endif
+
+// The function std::exchange<>() was introduced in the C++14 standard.
+#if __cplusplus < CPLUSPLUS_14
 #error Header file "awo/savefmt.hpp" requires at least C++14 capabilities.
 #endif
+
+// Required standard-library headers:
 
 #include <ios>          // std::basic_ios<>{}
 #include <string>       // std::char_traits<>{}
@@ -77,69 +103,83 @@ formatted extraction/insertion (>>, <<) operators.
 namespace awo {
 //----------------------------------------------------------------------------
 
-/// This is a template from which to create classes that can save/restore stream formatting-parameters.
-///
-/// When instantiated with an appropriate character type, creates a concrete class definition
+/// This is a template from which classes may be created that save/restore stream formatting parameters.
+
+/// When instantiated with an appropriate character type, the template creates a concrete class definition
 /// which can subsequently be used to create saver/restorer objects.
 ///
 /// @tparam CharT - The character type on which to instantiate this template.
 /// @tparam Traits - The character-traits type on which to instantiate this template
-/// (usually omitted and the char_traits<> default used).
+/// (usually omitted and the \b std::char_traits< CharT > default used).
 ///
 /// One is generally expected to only instantiate this template over the character
-/// types \b char and \b wchar_t (for which, see the pre-instantiated typedefs
-/// \ref savefmt and \ref wsavefmt).
+/// types \b char and \b wchar_t (for which, see the typedefs \ref savefmt and \ref wsavefmt).
+///
+/// The capture/restoration of stream formatting parameters is achieved using the function
+/// \b std::basic_ios< CharT, Traits >::copyfmt(),\n 
+/// which can be found documented here: https://en.cppreference.com/w/cpp/io/basic_ios/copyfmt
 
 template< typename CharT, typename Traits = std::char_traits< CharT > >
 class basic_savefmt
 {
     /// The relevant base class of all streams of which we can save formatting parameters; <br>
     /// also the concrete class type into an instance of which the parameters are saved.
-    using stream_base = std::basic_ios< CharT, Traits >;
-
-    /// A record of which stream's formatting parameters we are holding; initially none.
-    stream_base* bound_stream{ nullptr };
-
-    /// An ios-based object (with no stream buffer) into which the parameters are saved.
-    stream_base saved_format{ nullptr };
+    using streambase_t = std::basic_ios< CharT, Traits >;
 
 public:
 
-    /// Default constructor: creates an inactive saver/restorer object.
+    /// Default constructor: creates an empty ("inactive") object.
     basic_savefmt() = default;
 
-    /// Capturing constructor: saves parameters from (and a reference to) the given stream.
-    explicit basic_savefmt( stream_base& stream );
+    /// Capturing constructor: saves formatting parameters from (and a reference to) the given stream.
+    /// @param stream - the stream whose formatting parameters are to be captured.
+    explicit basic_savefmt( streambase_t& stream );
 
     /// Objects of this type \a can be move-constructed in the normal manner.
+    /// @param other - the savefmt instance to be moved into this instance.
     basic_savefmt( basic_savefmt&& other );
 
     /// Objects of this type \a cannot be copy-constructed.
     basic_savefmt( basic_savefmt const& ) = delete;
 
-    /// If we have a stream's formatting parameters captured, the destructor restores them.
-    ~basic_savefmt();
+    /// If this instance has a stream's formatting parameters captured,
+    /// the destructor restores them.
+    virtual ~basic_savefmt();
 
     /// Objects of this type \a can be move-assigned in the normal manner.
+    /// @param other - the savefmt instance to be moved into this instance.
     /// @return \b *this as a \b basic_savefmt&
     basic_savefmt& operator=( basic_savefmt&& other );
 
     /// Objects of this type \a cannot be copy-assigned.
     basic_savefmt& operator=( basic_savefmt const& ) = delete;
 
-    /// Save a stream's formatting parameters (possibly restoring any that are already captured).
-    void capture( stream_base& stream );
+    /// Save a stream's formatting parameters (possibly restoring any that have
+    /// previously been captured from another stream and not released - see below).
+    /// @param stream - the stream whose formatting parameters are to be captured.
+    void capture( streambase_t& stream );
 
-    /// Restore saved parameters back to the stream from which they came.
+    /// Restore any saved parameters back to the stream from which they came.
+    ///
+    /// This does \a not release them, allowing multiple \b restore() operations
+    /// while this instance has the stream's original parameters captured.
     void restore();
 
-    /// Reset this object such that it no longer holds a stream's parameters.
+    /// Reset this object such that it no longer holds any stream's parameters.
     void release();
 
     /// Reports the associated stream (whose formatting parameters have been saved).
-    /// \return reference to the stream as a \b stream_base* if this object is "active";
+    /// \return a reference to the stream as a \b streambase_t* if this object is "active";
     /// \return a null pointer if not.
-    stream_base* stream() const;
+    streambase_t* stream() const;
+
+protected:
+
+    /// A record of which stream's formatting parameters we are holding; initially none.
+    streambase_t* bound_stream = nullptr;
+
+    /// A bufferless \b ios object into which the stream's formatting parameters are saved; initially empty.
+    streambase_t saved_format{ nullptr };
 };
 
 /*------------------------------------------*\
@@ -149,14 +189,14 @@ public:
 /// Stream extraction-operator to handle savefmt instances appearing in \b operator>> chains.
 template< typename CharT, typename Traits >
 std::basic_istream< CharT, Traits >&
-operator>>( std::basic_istream<CharT, Traits>& stream,
-                 basic_savefmt<CharT, Traits>&& saver );
+operator>>( std::basic_istream< CharT, Traits >& stream,
+                 basic_savefmt< CharT, Traits >&& saver );
 
 /// Stream insertion-operator to handle savefmt instances appearing in \b operator<< chains.
 template< typename CharT, typename Traits >
 std::basic_ostream< CharT, Traits >&
-operator<<( std::basic_ostream<CharT, Traits>& stream,
-                 basic_savefmt<CharT, Traits>&& saver );
+operator<<( std::basic_ostream< CharT, Traits >& stream,
+                 basic_savefmt< CharT, Traits >&& saver );
 
 /*------------------------------------------------------*\
 |*  Specialisations for common stream character-types:  *|
@@ -180,10 +220,10 @@ using wsavefmt = basic_savefmt< wchar_t >;
 
 template< typename CharT, typename Traits >
 awo::basic_savefmt< CharT, Traits >::
-basic_savefmt( stream_base& stream )
+basic_savefmt( streambase_t& stream )
 : bound_stream{ &stream }
 {
-    // We've now bound this instance to the given stream (above).
+    // We've now bound this instance to the given stream (initialization, above).
 
     // Capture its current formatting parameters for later restoration.
     saved_format.copyfmt( stream );
@@ -228,13 +268,10 @@ operator=( basic_savefmt&& other )
 template< typename CharT, typename Traits >
 void
 awo::basic_savefmt< CharT, Traits >::
-capture( stream_base& stream )
+capture( streambase_t& stream )
 {
     // If we are currently active, restore the saved parameters to the stream.
-    if ( bound_stream != nullptr )
-    {
-        bound_stream->copyfmt( saved_format ); // this is an unchecked restore()
-    }
+    restore();
 
     // Now bind to the new stream.
     bound_stream = &stream;
@@ -274,7 +311,8 @@ release()
 template< typename CharT, typename Traits >
 auto
 awo::basic_savefmt< CharT, Traits >::
-stream() const -> stream_base*
+stream() const
+-> streambase_t*
 {
     // Return a pointer to the stream to which we are bound (or nullptr).
     return bound_stream;
@@ -294,8 +332,8 @@ awo::basic_savefmt< CharT, Traits >::
 
 template< typename CharT, typename Traits >
 std::basic_istream< CharT, Traits >&
-awo::operator>>( std::basic_istream<CharT, Traits>& stream,
-                 awo::basic_savefmt<CharT, Traits>&& saver )
+awo::operator>>( std::basic_istream< CharT, Traits >& stream,
+                 awo::basic_savefmt< CharT, Traits >&& saver )
 {
     // Capture the stream's formatting parameters.
     // Note: the saver object will expire at the end of the enclosing expression

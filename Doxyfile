@@ -1,12 +1,7 @@
-# Doxyfile 1.8.13
-
-# This file describes the settings to be used by the documentation system
-# doxygen (www.doxygen.org) for a project.
-
 PROJECT_NAME	    = savefmt
 PROJECT_BRIEF       = "A C++ class used for temporary changes to streams' formatting parameters"
 
-INPUT               = awo
+INPUT               = include/awo
 FILE_PATTERNS       = *.hpp
 RECURSIVE           = YES
 
