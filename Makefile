@@ -1,45 +1,32 @@
-HARNESS			:= test-savefmt
-LIBHEADER		:= include/awo/savefmt.hpp
-MAKEFILE		:= Makefile
-DOXYFILE		:= Doxyfile
-DOXYROOT		:= html/index.html
+TARGET =				test-savefmt
+BUILDDIR = 				build
 
-OBJECTS			:= $(HARNESS).o
-DEPENDS			:= $(wildcard $(OBJECTS:.o=.d))
+.PHONY:					all verbose cmake clean run view install uninstall ${BUILDDIR}/install_manifest.txt help
 
-#--------------------------------------------------------------------------------------------
-# Construct the necessary compilation/linkage CPPFLAGS, CFLAGS, CXXFLAGS, LDFLAGS and LDLIBS
-#--------------------------------------------------------------------------------------------
+all: ${BUILDDIR};		@cd ${BUILDDIR} && make -j4
 
-# Required C++ standards compatibilty
-CXXFLAGS		+= -std=c++14 -pedantic
+verbose: ${BUILDDIR};	@cd ${BUILDDIR} && make -j4 VERBOSE=1
 
-# Warnings control
-CXXFLAGS		+= -Wall -Wextra
+${BUILDDIR}:;			@cmake -B ${BUILDDIR}
 
-# Optimisation/debugging control
-CXXFLAGS		+= -O3 -g3
+cmake:;					@cmake -B ${BUILDDIR}
 
-# Locate the header file(s)
-CPPFLAGS		+= -I include
+clean:;					@rm -rvf ${BUILDDIR}
 
-# Generate source dependencies when compiling...
-CPPFLAGS 		+= -MMD -MP
+run: all;				@${BUILDDIR}/test/${TARGET}
 
-# Use C++ mode when linking...
-LINK.o			:= $(LINK.o:$(CC)=$(CXX))
+view: all;				@firefox build/docs/html/index.html &			
 
-#------------------------------------------------------------
-# Build Targets
-#------------------------------------------------------------
+install: all;			@sudo cmake --install ${BUILDDIR}
 
-.PHONY:			all clean
+uninstall:				${BUILDDIR}/install_manifest.txt
+						@[[ -f $< ]] && sudo xargs -r rm -fv < $< && sudo rm -fv $< || true
 
-all:			$(HARNESS) $(DOXYROOT)
-clean:;			@rm -rvf $(HARNESS) *.[do] html
-$(HARNESS):		$(OBJECTS)
-$(OBJECTS):		$(MAKEFILE)
-$(DOXYROOT):	$(LIBHEADER) $(DOXYFILE) $(MAKEFILE)
-				doxygen
-
--include 		$(DEPENDS)
+help:					@echo 'make [all] - compile the test suite'
+						@echo 'make verbose - as above, reporting commands executed'
+						@echo 'make clean - remove non-codebase artifacts'
+						@echo 'make run - execute the test suite'
+						@echo 'make view - open the documentation in firefox'
+						@echo 'make install - copy the header(s) to system location'
+						@echo 'make uninstall - remove the header(s) from system location'
+						

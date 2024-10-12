@@ -1,7 +1,7 @@
 PROJECT_NAME	    = savefmt
 PROJECT_BRIEF       = "A C++ class used for temporary changes to streams' formatting parameters"
 
-INPUT               = include/awo
+INPUT               = @SOURCE_FILES@
 FILE_PATTERNS       = *.hpp
 RECURSIVE           = YES
 

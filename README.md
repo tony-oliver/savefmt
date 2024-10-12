@@ -16,12 +16,12 @@ Typically, the only specialisations expected are on **`char`** and **`wchar_t`**
 
 For convenience, two type aliases are provided for these common specialisations:
 
-* **`savefmt`** = **`basic_savefmt`** specialised on **`char`**;
-* **`wsavefmt`** = **`basic_savefmt`** specialised on **`wchar_t`**.
+* **`savefmt`** = **`basic_savefmt`** specialised on **`char`** and **`std::char_traits<char>`**;
+* **`wsavefmt`** = **`basic_savefmt`** specialised on **`wchar_t`** and **`std::char_traits<wchar_t>`**.
 
 Stream-based insertion and extraction operators are also provided for the classes generated from the class template.  [See below for usage of these](#user-content-expression-based-raii).
 
-Doxygen documentation is generated on building the test program contained in this project and [can be found here](html/index.html).
+Doxygen documentation is generated on building the test program contained in this project and [can be found here](html/index.html) once built.
 
 ## Requirements
 
@@ -57,18 +57,21 @@ void report( std::ostream& out, unsigned const value )
 	awo::savefmt const saver( out );
 
 	out << std::dec;
-	out << "size (decimal) = " << value << std::endl;;
+	out << "value (decimal) = " << value << std::endl;;
 
 	out << std::hex << std::uppercase << std::setfill( '0' );
-	out << "size (hex) = 0x" << std::setw( 2 * sizeof size ) << value << std::endl;
+	out << "value (hex) = 0x" << std::setw( 2 * sizeof value ) << value << std::endl;
 }
 ```
 
-The output-stream gets manipulated in a number of ways during the execuation of this function, which would leave it in a state quite different from that which it had before the function was called.  However, the presence of the **`aw::savefmt`** object, established before any such manipulation, guarantees that the stream will contain exactly the same formatting properties as it did when that object was created.  (The **`awo::savefmt`** object "**`saver`**" saves the stream's formatting properties on execution of its constructor and restores them back to the same stream on execution of its destructor).
+The output-stream gets manipulated in a number of ways during the execuation of this function, which would leave it in a state quite different from that which it had before the function was called.
+However, the presence of the **`aw::savefmt`** object, established before any such manipulation, guarantees that the stream will contain exactly the same formatting properties as it did when that object was created.
+(The **`awo::savefmt`** object "**`saver`**" saves the stream's formatting properties on execution of its constructor and restores them back to the same stream on execution of its destructor).
 
 ### Manual Manipulation
 
-Sometimes we encounter external library functions that might (naughtily) leave the stream holding changed (known or unpredictable) formatting parameters, requiring the caller to reinstate its desired parameters afterwards in order to continue in a predictable manner.
+Sometimes we encounter external library functions that might (naughtily) leave the stream holding changed (known or unpredictable) formatting parameters,
+requiring the caller to reinstate its desired parameters afterwards in order to continue in a predictable manner.
 
 ```
 #include <awo/savefmt>
@@ -79,30 +82,32 @@ void do_my_work()
 
 	awo::savefmt saver;
 
-	// it is assumed, here, that std::cout still has its default settings (e.g. std::dec)
+	// it is assumed, here, that std::cout still has its default settings (e.g. std::dec is in effect)
 
 	std::cout << "Forty-two = " << 42 << std::endl;
 
 	saver.capture( std::cout );
 	call_naughty_external_function();
-	saver.restore();
+	saver.restore(); // revert to original state for std::cout
 
 	std::cout << "Forty-two = " << 42 << std::endl;
 
 	call_another_naughty_external_function();
-	saver.restore();
+	saver.restore(); // again, revert to original state for std::cout
 
 	std::cout << "Forty-two = " << 42 << std::endl;
 
-	saver.release();
+	saver.release(); // forget the saved state of std::cout
 
 	// ... lots more code ...
 }
 ```
 
-Here, we introduce an **`awo::savefmt`** object (which captures the current state of stream **`std::cout`**) and call its **`restore()`** member function each time we fear that the stream's state has been altered without our express permission.  Each such **`restore()`** will copy the originally-captured formatting parameters back to the stream.
+Here, we introduce an **`awo::savefmt`** object (which captures the current state of stream **`std::cout`**) and call its **`restore()`** member function each time we suspect that the stream's state might have been altered without our express permission.
+Each such **`restore()`** will copy the originally-captured formatting parameters back to the stream.
 
-We have also called **`saver.release()`** here, which will prevent the **`savefmt`** object from restoring the original parameters once again, when the **`saver`** object goes out of scope and gets destroyed (this **`release()`** operation is an optional, but often useful, step).
+We have also called **`saver.release()`** here, which will prevent the **`savefmt`** object from restoring the original parameters once again,
+when the **`saver`** object goes out of scope and gets destroyed (this **`release()`** operation is an optional, but often useful, step).
 
 ### Expression-based RAII
 
@@ -140,4 +145,6 @@ void do_my_work()
 }
 ```
 
-Here, we only introduce the **`awo::savefmt`** object in the stream-insertion expression itself, where it captures the stream's formatting parameters.  This temporary object is guaranteed to remain in existence until the enclosing-expression is competely evaluated.  At that time, the temporary is destroyed, restoring the captured parameters back to the stream from whence they came.
+Here, we only introduce the **`awo::savefmt`** object in the stream-insertion expression itself, where it captures the stream's formatting parameters.
+This temporary object is guaranteed to remain in existence until the enclosing-expression is competely evaluated.
+At that time, the temporary is destroyed, restoring the captured parameters back to the stream from whence they came.
