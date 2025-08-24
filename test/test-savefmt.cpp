@@ -2,6 +2,7 @@
 
 #include <gtest/gtest.h>
 
+#include <iomanip>
 #include <ostream>
 #include <sstream>
 #include <utility>

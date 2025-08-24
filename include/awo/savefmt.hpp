@@ -49,8 +49,8 @@ savefmt's destructor will restore the formatting parameters that
 were in effect in the stream before the saver was created.
 
 A variety of other, more complex, scenarios can be dealt with
-using the the move-constructor, move-assignment operator and
-the named member-functions capture(), restore() and release().
+using the move-constructor, move-assignment operator and the
+named member-functions capture(), restore() and release().
 
 Since the introduction of rvalue-references to the C++ language,
 this implementation has adopted their use, thereby obviating the
@@ -81,10 +81,6 @@ operator.
 #define CPLUSPLUS_20    202002L
 
 // RValue-references (and move semantics) require at least C++11 support.
-#if __cplusplus < CPLUSPLUS_11
-#error Header file "awo/savefmt.hpp" requires at least C++11 capabilities.
-#endif
-
 // The function std::exchange<>() was introduced in the C++14 standard.
 #if __cplusplus < CPLUSPLUS_14
 #error Header file "awo/savefmt.hpp" requires at least C++14 capabilities.
@@ -218,8 +214,7 @@ using wsavefmt = basic_savefmt< wchar_t >;
 \*==============================================*/
 
 template< typename CharT, typename Traits >
-awo::basic_savefmt< CharT, Traits >::
-basic_savefmt( streambase_t& stream )
+awo::basic_savefmt< CharT, Traits >::basic_savefmt( streambase_t& stream )
 : bound_stream{ &stream }
 {
     // We've now bound this instance to the given stream (initialization, above).
@@ -231,8 +226,7 @@ basic_savefmt( streambase_t& stream )
 //----------------------------------------------------------------------------
 
 template< typename CharT, typename Traits >
-awo::basic_savefmt< CharT, Traits >::
-basic_savefmt( basic_savefmt&& other )
+awo::basic_savefmt< CharT, Traits >::basic_savefmt( basic_savefmt&& other )
 : bound_stream{ std::exchange( other.bound_stream, nullptr ) }
 {
     // We've bound this instance to the stream previously bound-to by the
@@ -245,10 +239,7 @@ basic_savefmt( basic_savefmt&& other )
 //----------------------------------------------------------------------------
 
 template< typename CharT, typename Traits >
-auto
-awo::basic_savefmt< CharT, Traits >::
-operator=( basic_savefmt&& other )
--> basic_savefmt&
+auto awo::basic_savefmt< CharT, Traits >::operator=( basic_savefmt&& other ) -> basic_savefmt&
 {
     if ( &other != this )
     {
@@ -265,9 +256,7 @@ operator=( basic_savefmt&& other )
 //----------------------------------------------------------------------------
 
 template< typename CharT, typename Traits >
-void
-awo::basic_savefmt< CharT, Traits >::
-capture( streambase_t& stream )
+void awo::basic_savefmt< CharT, Traits >::capture( streambase_t& stream )
 {
     // If we are currently active, restore the saved parameters to the stream.
     restore();
@@ -282,9 +271,7 @@ capture( streambase_t& stream )
 //----------------------------------------------------------------------------
 
 template< typename CharT, typename Traits >
-void
-awo::basic_savefmt< CharT, Traits >::
-restore()
+void awo::basic_savefmt< CharT, Traits >::restore()
 {
     // Ignore inactive instances - no stream to restore to
     if ( bound_stream != nullptr )
@@ -297,9 +284,7 @@ restore()
 //----------------------------------------------------------------------------
 
 template< typename CharT, typename Traits >
-void
-awo::basic_savefmt< CharT, Traits >::
-release()
+void awo::basic_savefmt< CharT, Traits >::release()
 {
     // Unbind from the stream, so the saved parameters cannot be restored.
     bound_stream = nullptr;
@@ -308,10 +293,7 @@ release()
 //----------------------------------------------------------------------------
 
 template< typename CharT, typename Traits >
-auto
-awo::basic_savefmt< CharT, Traits >::
-stream() const
--> streambase_t*
+auto awo::basic_savefmt< CharT, Traits >::stream() const -> streambase_t*
 {
     // Return a pointer to the stream to which we are bound (or nullptr).
     // This is useful for an "is active" test and for more esoteric tracking.
@@ -321,8 +303,7 @@ stream() const
 //----------------------------------------------------------------------------
 
 template< typename CharT, typename Traits >
-awo::basic_savefmt< CharT, Traits >::
-~basic_savefmt()
+awo::basic_savefmt< CharT, Traits >::~basic_savefmt()
 {
     // Restore any saved formatting parameters to their stream (if any).
     restore();
