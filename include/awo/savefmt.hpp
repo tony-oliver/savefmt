@@ -5,7 +5,7 @@
 
 Header file "awo/savefmt.hpp"
 
-Copyright © 2005-2024, Tony Oliver <tony@oliver.net>. All rights reserved.
+Copyright © 2005-2025, Tony Oliver <tony@oliver.net>. All rights reserved.
 The author, being Tony Oliver, has asserted his moral rights.
 
 Permission to use, copy, modify, distribute and sell this software
@@ -79,6 +79,7 @@ operator.
 #define CPLUSPLUS_14    201402L
 #define CPLUSPLUS_17    201703L
 #define CPLUSPLUS_20    202002L
+#define CPLUSPLUS_23    202302L
 
 // RValue-references (and move semantics) require at least C++11 support.
 // The function std::exchange<>() was introduced in the C++14 standard.
@@ -156,9 +157,12 @@ public:
 
     /// Restore any saved parameters back to the stream from which they came.
     ///
-    /// This does \a not release them, allowing multiple \b restore() operations
+    /// Unless explicitly requested (by passing \b true as its parameter),
+    /// this does \a not release them, allowing multiple \b restore() operations
     /// while this instance has the stream's original parameters captured.
-    void restore();
+    /// @param also_release - whether or not to also clear (release) this instance -
+    /// see \b release() below.
+    void restore( bool also_release = false );
 
     /// Reset this object such that it no longer holds any stream's parameters.
     void release();
@@ -271,13 +275,18 @@ void awo::basic_savefmt< CharT, Traits >::capture( streambase_t& stream )
 //----------------------------------------------------------------------------
 
 template< typename CharT, typename Traits >
-void awo::basic_savefmt< CharT, Traits >::restore()
+void awo::basic_savefmt< CharT, Traits >::restore( bool const also_release )
 {
     // Ignore inactive instances - no stream to restore to
     if ( bound_stream != nullptr )
     {
         // Restore the saved formatting parameters back to the stream.
         bound_stream->copyfmt( saved_format );
+
+        if ( also_release )
+        {
+            bound_stream = nullptr;
+        }
     }
 }
 
@@ -317,7 +326,7 @@ awo::operator>>( std::basic_istream< CharT, Traits >& stream,
                  awo::basic_savefmt< CharT, Traits >&& saver )
 {
     // Note: the saver object will expire at the end of the enclosing expression
-    // and will therefore then restore the saved parameters back to the stream.
+    // and will then, therefore, restore the saved parameters back to the stream.
 
     // Capture the stream's formatting parameters.
     saver.capture( stream );
@@ -334,7 +343,7 @@ awo::operator<<( std::basic_ostream< CharT, Traits >& stream,
                  awo::basic_savefmt< CharT, Traits >&& saver )
 {
     // Note: the saver object will expire at the end of the enclosing expression
-    // and will therefore then restore the saved parameters back to the stream.
+    // and will then, therefore, restore the saved parameters back to the stream.
 
     // Capture the stream's formatting parameters.
     saver.capture( stream );
