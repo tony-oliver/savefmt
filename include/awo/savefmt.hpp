@@ -304,7 +304,7 @@ void awo::basic_savefmt< CharT, Traits >::release()
 template< typename CharT, typename Traits >
 auto awo::basic_savefmt< CharT, Traits >::stream() const -> streambase_t*
 {
-    // Return a pointer to the stream to which we are bound (or nullptr).
+    // Return a pointer to the stream to which we are bound (or \b nullptr).
     // This is useful for an "is active" test and for more esoteric tracking.
     return bound_stream;
 }
@@ -314,7 +314,7 @@ auto awo::basic_savefmt< CharT, Traits >::stream() const -> streambase_t*
 template< typename CharT, typename Traits >
 awo::basic_savefmt< CharT, Traits >::~basic_savefmt()
 {
-    // Restore any saved formatting parameters to their stream (if any).
+    // Restore the saved formatting parameters (if any) to their stream.
     restore();
 }
 
