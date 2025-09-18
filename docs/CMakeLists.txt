@@ -2,11 +2,11 @@ project( savefmt-docs )
 
 find_package( Doxygen REQUIRED )
 
-set( SOURCE_FILES ${CMAKE_SOURCE_DIR}/include )
+set( SOURCE_FILES ${CMAKE_SOURCE_DIR}/include/awo )
 
 set_property( SOURCE ${CMAKE_CURRENT_BINARY_DIR}/html/index.html
                 APPEND PROPERTY
-                OBJECT_DEPENDS ${SOURCE_FILES}/include/awo/savefmt.hpp )
+                OBJECT_DEPENDS ${SOURCE_FILES}/awo/savefmt.hpp )
 
 configure_file( Doxyfile . )
 

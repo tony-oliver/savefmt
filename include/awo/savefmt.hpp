@@ -99,7 +99,7 @@ operator.
 namespace awo { // The namespace in which Tony Oliver's works usually appear.
 //----------------------------------------------------------------------------
 
-/// This is a class template from which stream formatting parameters' save/restore objects may be created.
+/// \brief This is a class template from which stream formatting parameters' save/restore objects may be created.
 
 /// When instantiated with an appropriate character type, the template creates a concrete class definition
 /// which can subsequently be used to create saver/restorer objects.
@@ -118,66 +118,66 @@ namespace awo { // The namespace in which Tony Oliver's works usually appear.
 template< typename CharT, typename Traits = std::char_traits< CharT > >
 class basic_savefmt
 {
-    /// The base class type of all streams from which we can save formatting parameters; <br>
+    /// \brief The base class type of all streams from which we can save formatting parameters; <br>
     /// also the concrete class type into an instance of which the parameters will be saved.
     using streambase_t = std::basic_ios< CharT, Traits >;
 
 public:
 
-    /// Default constructor: creates an empty ("inactive") object.
+    /// \brief Default constructor: creates an empty ("inactive") object.
     basic_savefmt() = default;
 
-    /// Capturing constructor: saves formatting parameters from (and a reference to) the given stream.
+    /// \brief Capturing constructor: saves formatting parameters from (and a reference to) the given stream.
     /// @param stream - the stream whose formatting parameters are to be captured.
     explicit basic_savefmt( streambase_t& stream );
 
-    /// Objects of this type \a can be move-constructed from other instances.
+    /// \brief Objects of this type \a can be move-constructed from other instances.
     /// @param other - the savefmt instance from which to be moved.
     basic_savefmt( basic_savefmt&& other );
 
-    /// Objects of this type \a cannot be copy-constructed.
+    /// \brief Objects of this type \a cannot be copy-constructed.
     basic_savefmt( basic_savefmt const& ) = delete;
 
-    /// If this instance has a stream's formatting parameters captured,
+    /// \brief If this instance has a stream's formatting parameters captured,
     /// the destructor restores them.
     virtual ~basic_savefmt();
 
-    /// Objects of this type \a can be move-assigned in the normal manner.
+    /// \brief Objects of this type \a can be move-assigned in the normal manner.
     /// @param other - the savefmt instance to be moved into this instance.
     /// @return \b *this as a \b basic_savefmt&
     basic_savefmt& operator=( basic_savefmt&& other );
 
-    /// Objects of this type \a cannot be copy-assigned.
+    /// \brief Objects of this type \a cannot be copy-assigned.
     basic_savefmt& operator=( basic_savefmt const& ) = delete;
 
-    /// Save a stream's formatting parameters (possibly restoring any that have
+    /// \brief Save a stream's formatting parameters (possibly restoring any that have
     /// previously been captured from another stream and not released - see below).
     /// @param stream - the stream whose formatting parameters are to be captured.
     void capture( streambase_t& stream );
 
-    /// Restore any saved parameters back to the stream from which they came.
+    /// \brief Restore any saved parameters back to the stream from which they came.
     ///
     /// Unless explicitly requested (by passing \b true as its parameter),
     /// this does \a not release them, allowing multiple \b restore() operations
     /// while this instance has the stream's original parameters captured.
-    /// @param also_release - whether or not to also clear (release) this instance -
-    /// see \b release() below.
+    /// @param also_release - whether or not to also clear (release) this instance
+    /// - see \b release() below.
     void restore( bool also_release = false );
 
-    /// Reset this object such that it no longer holds any stream's parameters.
+    /// \brief Reset this object such that it no longer holds any stream's parameters.
     void release();
 
-    /// Reports the associated stream (whose formatting parameters have been saved).
+    /// \brief Reports the associated stream (whose formatting parameters have been saved).
     /// \return a reference to the stream as a \b streambase_t* if this object is "active";
     /// \return a null pointer if not.
     streambase_t* stream() const;
 
 protected:
 
-    /// A record of which stream's formatting parameters we are holding; initially none.
+    /// \brief A record of which stream's formatting parameters we are holding; initially none.
     streambase_t* bound_stream = nullptr;
 
-    /// A bufferless \b ios object into which the stream's formatting parameters are saved; initially empty.
+    /// \brief A bufferless \b ios object into which the stream's formatting parameters are saved; initially empty.
     streambase_t saved_format{ nullptr };
 };
 
@@ -185,13 +185,13 @@ protected:
 |*  Stream extraction/insertion operators:  *|
 \*------------------------------------------*/
 
-/// Stream extraction-operator to handle savefmt-instances appearing in \b operator>> chains.
+/// \brief Stream extraction-operator to handle savefmt-instances appearing in \b operator>> chains.
 template< typename CharT, typename Traits >
 std::basic_istream< CharT, Traits >&
 operator>>( std::basic_istream< CharT, Traits >& stream,
                  basic_savefmt< CharT, Traits >&& saver );
 
-/// Stream insertion-operator to handle savefmt-instances appearing in \b operator<< chains.
+/// \brief Stream insertion-operator to handle savefmt-instances appearing in \b operator<< chains.
 template< typename CharT, typename Traits >
 std::basic_ostream< CharT, Traits >&
 operator<<( std::basic_ostream< CharT, Traits >& stream,
@@ -201,10 +201,10 @@ operator<<( std::basic_ostream< CharT, Traits >& stream,
 |*  Specialisations for common stream character-types:  *|
 \*------------------------------------------------------*/
 
-/// Pre-declared instantiation and typedef of template \b basic_savefmt over the character-type \b char.
+/// \brief Pre-declared instantiation and typedef of template \b basic_savefmt over the character-type \b char.
 using savefmt = basic_savefmt< char >;
 
-/// Pre-declared instantiation and typedef of template \b basic_savefmt over the character-type \b wchar_t.
+/// \brief Pre-declared instantiation and typedef of template \b basic_savefmt over the character-type \b wchar_t.
 using wsavefmt = basic_savefmt< wchar_t >;
 
 //----------------------------------------------------------------------------
